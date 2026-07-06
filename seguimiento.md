@@ -17,14 +17,14 @@
 - [x] Repositorio git inicializado (rama `main`)
 - [x] Diseño de base de datos (schema Prisma con 14 modelos)
 - [x] Entorno local de Postgres (docker-compose) y primera migración aplicada
+- [x] Scaffold del backend NestJS (main/app module, PrismaModule/PrismaService, endpoint /health verificado end-to-end contra Postgres real, lint y tests pasando)
 
 ### En progreso
 - [ ] Arquitectura detallada del sistema (backend/frontend)
 - [ ] Definición del flujo de trabajo de desarrollo (ramas develop/feature pendientes de crear)
-- [ ] Preparación del entorno de desarrollo (backend con Prisma listo; falta scaffold de NestJS y Next.js)
+- [ ] Preparación del entorno de desarrollo (falta scaffold de Next.js)
 
 ### Pendiente
-- [ ] Configuración del backend (NestJS)
 - [ ] Configuración del frontend (Next.js)
 - [ ] Autenticación y roles
 - [ ] Dashboard inicial
@@ -36,10 +36,9 @@
 ## Resumen de avance
 - Documentación de producto: 100%
 - Planeación técnica: 65%
-- Implementación: 10% (schema de base de datos y entorno Postgres local listos)
+- Implementación: 20% (base de datos + backend NestJS con salud verificada; falta frontend y módulos de negocio)
 
 ## Próximos pasos
-1. Scaffold del backend NestJS (módulos, conexión a Prisma Client).
-2. Scaffold del frontend Next.js.
-3. Implementar autenticación (JWT + refresh tokens) y roles.
-4. Implementar primer dashboard.
+1. Scaffold del frontend Next.js.
+2. Implementar autenticación (JWT + refresh tokens) y roles.
+3. Implementar primer dashboard.
