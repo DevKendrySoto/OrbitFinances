@@ -1,0 +1,291 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum Currency {
+  USD
+  DOP
+}
+
+enum IncomeType {
+  SALARY
+  FREELANCE
+  OTHER
+}
+
+enum PaymentPriority {
+  CRITICAL
+  IMPORTANT
+  OPTIONAL
+}
+
+enum RecurrenceFrequency {
+  MONTHLY
+  BIWEEKLY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum ExpenseCategory {
+  SUPERMARKET
+  COLMADO
+  FOOD
+  TRANSPORT
+  OUTINGS
+  OTHER
+  UNEXPECTED
+}
+
+enum GoalStatus {
+  IN_PROGRESS
+  COMPLETED
+  PAUSED
+}
+
+model User {
+  id           String            @id @default(cuid())
+  email        String            @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  memberships  HouseholdMember[]
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Household {
+  id                String                @id @default(cuid())
+  name              String
+  baseCurrency      Currency              @default(DOP)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  members           HouseholdMember[]
+  incomes           Income[]
+  conversions       CurrencyConversion[]
+  recurringPayments RecurringPayment[]
+  variableExpenses  VariableExpense[]
+  goals             SavingsGoal[]
+  monthlyClosings   MonthlyClosing[]
+  auditLogs         AuditLog[]
+  aiRecommendations AIRecommendation[]
+}
+
+// Vincula un usuario a un hogar con un rol (Administrador / Miembro).
+// Los ingresos y gastos se asocian a este registro, no directamente a User,
+// para que el historial financiero quede atado al hogar aunque el usuario
+// participe en más de un hogar en el futuro.
+model HouseholdMember {
+  id          String    @id @default(cuid())
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  role        Role      @default(MEMBER)
+  joinedAt    DateTime  @default(now())
+
+  incomes          Income[]
+  variableExpenses VariableExpense[]
+
+  @@unique([householdId, userId])
+  @@index([householdId])
+}
+
+// Regla de negocio: nunca eliminar historial financiero -> deletedAt en vez de
+// borrado físico. period ("YYYY-MM") permite agrupar ingresos mensuales/variables.
+model Income {
+  id          String          @id @default(cuid())
+  household   Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId String
+  member      HouseholdMember @relation(fields: [memberId], references: [id])
+  memberId    String
+  type        IncomeType
+  currency    Currency
+  amount      Decimal         @db.Decimal(12, 2)
+  description String?
+  period      String
+  receivedAt  DateTime
+  isRecurring Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+  conversions CurrencyConversion[]
+
+  @@index([householdId, period])
+}
+
+// Regla de negocio: un ingreso en USD admite múltiples conversiones parciales.
+// El saldo restante en USD se calcula como income.amount - suma(amountUsd).
+model CurrencyConversion {
+  id           String    @id @default(cuid())
+  household    Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId  String
+  income       Income    @relation(fields: [incomeId], references: [id])
+  incomeId     String
+  amountUsd    Decimal   @db.Decimal(12, 2)
+  exchangeRate Decimal   @db.Decimal(10, 4)
+  amountDop    Decimal   @db.Decimal(12, 2)
+  convertedAt  DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+
+  @@index([incomeId])
+}
+
+// La generación automática del siguiente período crea un nuevo
+// RecurringPaymentOccurrence; el RecurringPayment en sí es la plantilla.
+model RecurringPayment {
+  id               String                 @id @default(cuid())
+  household        Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId      String
+  name             String
+  category         String?
+  amount           Decimal                @db.Decimal(12, 2)
+  currency         Currency
+  priority         PaymentPriority        @default(IMPORTANT)
+  frequency        RecurrenceFrequency    @default(MONTHLY)
+  dueDay           Int
+  secondaryDueDay  Int?
+  startDate        DateTime
+  endDate          DateTime?
+  isActive         Boolean                @default(true)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  deletedAt        DateTime?
+  occurrences      RecurringPaymentOccurrence[]
+}
+
+// Regla de negocio: solo se pueden editar/eliminar ocurrencias futuras
+// (status PENDING); las pasadas quedan como historial inmutable.
+model RecurringPaymentOccurrence {
+  id                 String           @id @default(cuid())
+  recurringPayment   RecurringPayment @relation(fields: [recurringPaymentId], references: [id], onDelete: Cascade)
+  recurringPaymentId String
+  period             String
+  dueDate            DateTime
+  amount             Decimal          @db.Decimal(12, 2)
+  status             PaymentStatus    @default(PENDING)
+  paidAt             DateTime?
+  paidAmount         Decimal?         @db.Decimal(12, 2)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@unique([recurringPaymentId, period])
+  @@index([period, status])
+}
+
+model VariableExpense {
+  id          String          @id @default(cuid())
+  household   Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId String
+  member      HouseholdMember @relation(fields: [memberId], references: [id])
+  memberId    String
+  category    ExpenseCategory
+  amount      Decimal         @db.Decimal(12, 2)
+  currency    Currency
+  description String?
+  spentAt     DateTime
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+
+  @@index([householdId, spentAt])
+}
+
+model SavingsGoal {
+  id            String               @id @default(cuid())
+  household     Household            @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId   String
+  name          String
+  targetAmount  Decimal              @db.Decimal(12, 2)
+  currency      Currency
+  targetDate    DateTime?
+  status        GoalStatus           @default(IN_PROGRESS)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  contributions GoalContribution[]
+}
+
+model GoalContribution {
+  id            String      @id @default(cuid())
+  goal          SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goalId        String
+  amount        Decimal     @db.Decimal(12, 2)
+  currency      Currency
+  contributedAt DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+
+  @@index([goalId])
+}
+
+// Regla de negocio: el cierre mensual es inmutable una vez creado
+// (no se expone update en la capa de aplicación).
+model MonthlyClosing {
+  id            String    @id @default(cuid())
+  household     Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId   String
+  period        String
+  totalIncome   Decimal   @db.Decimal(12, 2)
+  totalExpenses Decimal   @db.Decimal(12, 2)
+  totalPayments Decimal   @db.Decimal(12, 2)
+  availableReal Decimal   @db.Decimal(12, 2)
+  savingsTotal  Decimal   @db.Decimal(12, 2)
+  closedAt      DateTime  @default(now())
+
+  @@unique([householdId, period])
+}
+
+// Regla de negocio: todos los movimientos quedan auditados.
+model AuditLog {
+  id          String    @id @default(cuid())
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId String
+  userId      String
+  action      String
+  entityType  String
+  entityId    String
+  changes     Json?
+  createdAt   DateTime  @default(now())
+
+  @@index([householdId, createdAt])
+}
+
+// Regla de negocio: la IA solo recomienda, nunca modifica datos directamente;
+// por eso no hay relación hacia otras tablas más allá de lectura/dismiss.
+model AIRecommendation {
+  id          String    @id @default(cuid())
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId String
+  type        String
+  message     String
+  severity    String?
+  period      String?
+  dismissedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([householdId, createdAt])
+}
