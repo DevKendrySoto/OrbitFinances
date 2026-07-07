@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const ACCESS_COOKIE = 'orbitfinc_access_token';
-const protectedRoutes = ['/dashboard', '/calendar', '/goals', '/reports'];
+const protectedRoutes = ['/dashboard', '/calendar', '/goals', '/reports', '/incomes', '/expenses'];
 const publicOnlyRoutes = ['/login', '/register'];
 
 export default function proxy(request: NextRequest) {
@@ -25,6 +25,8 @@ export const config = {
     '/calendar/:path*',
     '/goals/:path*',
     '/reports/:path*',
+    '/incomes/:path*',
+    '/expenses/:path*',
     '/login',
     '/register',
   ],

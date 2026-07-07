@@ -171,6 +171,25 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="outline"
+            className="w-full"
+            nativeButton={false}
+            render={<Link href="/incomes" />}
+          >
+            Ver ingresos
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full"
+            nativeButton={false}
+            render={<Link href="/expenses" />}
+          >
+            Ver gastos
+          </Button>
+        </div>
+
         <Button
           variant="outline"
           className="w-full"

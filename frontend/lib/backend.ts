@@ -26,5 +26,9 @@ export async function backendFetch(path: string, init?: RequestInit) {
     throw new BackendError(message, res.status);
   }
 
+  if (res.status === 204) {
+    return undefined;
+  }
+
   return res.json();
 }
