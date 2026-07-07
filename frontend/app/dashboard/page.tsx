@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,6 +52,10 @@ export default async function DashboardPage() {
               <p className="text-muted-foreground">Rol: {membership.role}</p>
             </div>
           ))}
+
+          <Button className="w-full" nativeButton={false} render={<Link href="/calendar" />}>
+            Ver calendario financiero
+          </Button>
 
           <form action={logoutAction}>
             <Button type="submit" variant="outline" className="w-full">

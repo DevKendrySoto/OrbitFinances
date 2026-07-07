@@ -183,6 +183,16 @@ export class RecurringPaymentsService {
         ...(query.period ? { period: query.period } : {}),
         ...(query.status ? { status: query.status } : {}),
       },
+      include: {
+        recurringPayment: {
+          select: {
+            name: true,
+            category: true,
+            priority: true,
+            currency: true,
+          },
+        },
+      },
       orderBy: { dueDate: 'asc' },
     });
   }
