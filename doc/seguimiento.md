@@ -26,6 +26,7 @@
 - [x] Módulo de Pagos Recurrentes en el backend: crear/editar/eliminar (solo futuros), marcar pagado, generación automática de la ocurrencia del siguiente período al pagar, prioridad (Crítico/Importante/Opcional), frecuencia mensual o quincenal (dos ocurrencias por período). Requirió ajustar la restricción única de `RecurringPaymentOccurrence` de `[recurringPaymentId, period]` a `[recurringPaymentId, period, dueDate]` para soportar quincenal (migración `20260707142923`). Verificado end-to-end con curl contra Postgres real: generación automática al crear y al pagar, ajuste del día al último disponible del mes (día 31 en febrero → 28), eliminar cancela solo la ocurrencia PENDING futura y preserva intacta la ya PAID (historial inmutable), y aislamiento entre hogares. Tests unitarios de las funciones puras de fechas (`period.ts`) y de las reglas de negocio críticas del servicio.
 - [x] Módulo de Gastos Variables en el backend: CRUD completo (crear, listar con filtros de mes/categoría/miembro, ver uno, editar, eliminar como soft delete) con las 7 categorías del PRD (Supermercado, Colmado, Comida, Transporte, Salidas, Otros, Imprevistos). Mismo patrón que Ingresos, reutilizando `HouseholdAccessService`. Verificado end-to-end con curl contra Postgres real: filtro por mes (YYYY-MM → rango de spentAt), filtro por categoría, validación de categoría inválida, soft delete, y aislamiento entre hogares (403 en gasto activo de otro hogar, 404 en uno ya eliminado). Tests unitarios de los casos de seguridad.
 - [x] Calendario financiero en el frontend (/calendar): lista agrupada por fecha con "Pagos vencidos" y "Próximos pagos" (agrupados por mes), badges de prioridad y de vencido, botón "Marcar pagado" por ocurrencia (Server Action que llama al backend y usa `revalidatePath` para refrescar). Reutiliza el endpoint GET /recurring-payments/occurrences del backend, al que se le agregó el include del pago recurrente (nombre/categoría/prioridad/moneda) para poder mostrarlo. Enlazado desde /dashboard y protegido en proxy.ts. Verificado en navegador real con Playwright: agrupación correcta por mes, pago exitoso que genera automáticamente la siguiente ocurrencia y la mueve de "vencidos" a "próximos" (o de vuelta a "vencidos" si el nuevo vencimiento también ya pasó), sin errores de consola. Se encontró y corrigió un bug real: sin `revalidatePath('/calendar')` tras la Server Action, el router de Next.js mostraba datos obsoletos pese a que el backend sí se había actualizado correctamente.
+- [x] Dashboard real (backend + frontend): nuevo endpoint GET /dashboard/summary que agrega datos de los 4 módulos de negocio (ingresos del mes, comprometido en pagos pendientes, gastos variables, disponible real = ingresos - comprometido - gastos, ahorro USD sin convertir, estado del mes ok/warning/critical, próximos 5 pagos). El frontend (/dashboard) ahora muestra tarjetas con estos datos reales en vez del placeholder de perfil. Verificado end-to-end con curl contra Postgres real con datos de los 4 módulos combinados (cálculos exactos confirmados a mano) y aislamiento entre hogares; y en navegador real con Playwright (incluye el caso "critical" con disponible real negativo). Tests unitarios de la lógica de agregación.
 
 ### En progreso
 - [ ] Arquitectura detallada del sistema (backend/frontend)
@@ -35,7 +36,6 @@
 - [ ] Recuperación de contraseña (requiere decidir proveedor de email)
 - [ ] Invitación formal de miembros a un hogar existente (hoy el registro solo permite unirse pasando un householdId ya conocido)
 - [ ] Renovación silenciosa del access token (hoy si expira mientras se navega el dashboard, redirige a /login sin usar el refresh token automáticamente)
-- [ ] Dashboard real con datos financieros (el actual es solo una prueba de la sesión autenticada)
 - [ ] Módulo de metas de ahorro
 - [ ] Módulo de reportes
 - [ ] Integración de IA básica
@@ -43,9 +43,9 @@
 ## Resumen de avance
 - Documentación de producto: 100%
 - Planeación técnica: 65%
-- Implementación: 70% (base de datos + backend NestJS + autenticación + Ingresos + Conversión USD→DOP + Pagos Recurrentes + Gastos Variables + frontend con login, registro y calendario financiero funcionales; falta dashboard real y metas de ahorro)
+- Implementación: 80% (base de datos + backend NestJS + autenticación + 4 módulos de negocio + frontend completo con login, registro, calendario y dashboard real; falta metas de ahorro y reportes)
 
 ## Próximos pasos
 1. Módulo de metas de ahorro (siguiente en el roadmap del PRD).
-2. Dashboard real con datos financieros (disponible real, resumen de ingresos/gastos/pagos).
-3. Renovación silenciosa de sesión.
+2. Renovación silenciosa de sesión.
+3. Módulo de reportes (diario/quincenal/mensual/histórico/cierre mensual).

@@ -6,9 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { backendFetch, BackendError } from '@/lib/backend';
 import { getAccessToken } from '@/lib/session';
 import { formatDueDate, formatPeriodLabel } from '@/lib/period-label';
+import { PRIORITY_LABEL, PRIORITY_VARIANT, type Priority } from '@/lib/priority';
 import { payOccurrenceAction } from './actions';
-
-type Priority = 'CRITICAL' | 'IMPORTANT' | 'OPTIONAL';
 
 interface Occurrence {
   id: string;
@@ -23,18 +22,6 @@ interface Occurrence {
     currency: 'USD' | 'DOP';
   };
 }
-
-const PRIORITY_VARIANT: Record<Priority, 'destructive' | 'default' | 'secondary'> = {
-  CRITICAL: 'destructive',
-  IMPORTANT: 'default',
-  OPTIONAL: 'secondary',
-};
-
-const PRIORITY_LABEL: Record<Priority, string> = {
-  CRITICAL: 'Crítico',
-  IMPORTANT: 'Importante',
-  OPTIONAL: 'Opcional',
-};
 
 function OccurrenceRow({ occurrence, overdue }: { occurrence: Occurrence; overdue: boolean }) {
   return (
