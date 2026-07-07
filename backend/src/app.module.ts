@@ -8,6 +8,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { HouseholdModule } from './household/household.module';
 import { IncomesModule } from './incomes/incomes.module';
+import { ConversionsModule } from './conversions/conversions.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { IncomesModule } from './incomes/incomes.module';
     HouseholdModule,
     AuthModule,
     IncomesModule,
+    ConversionsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
