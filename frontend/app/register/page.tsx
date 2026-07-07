@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LoginForm } from '@/components/login-form';
+import { RegisterForm } from '@/components/register-form';
 import { getAccessToken } from '@/lib/session';
 
-export default async function LoginPage() {
+export default async function RegisterPage() {
   const accessToken = await getAccessToken();
   if (accessToken) {
     redirect('/dashboard');
@@ -14,15 +14,15 @@ export default async function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Orbitfinc</CardTitle>
-          <CardDescription>Inicia sesión para ver el estado financiero de tu hogar</CardDescription>
+          <CardTitle className="text-2xl">Crea tu cuenta</CardTitle>
+          <CardDescription>Empieza a organizar las finanzas de tu hogar</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <LoginForm />
+          <RegisterForm />
           <p className="text-center text-sm text-muted-foreground">
-            ¿No tienes cuenta?{' '}
-            <Link href="/register" className="font-medium underline underline-offset-4">
-              Regístrate
+            ¿Ya tienes cuenta?{' '}
+            <Link href="/login" className="font-medium underline underline-offset-4">
+              Inicia sesión
             </Link>
           </p>
         </CardContent>

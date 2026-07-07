@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const ACCESS_COOKIE = 'orbitfinc_access_token';
 const protectedRoutes = ['/dashboard'];
-const publicOnlyRoutes = ['/login'];
+const publicOnlyRoutes = ['/login', '/register'];
 
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -20,5 +20,5 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/login', '/register'],
 };
