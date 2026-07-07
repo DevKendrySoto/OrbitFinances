@@ -13,6 +13,7 @@ import { RecurringPaymentsModule } from './recurring-payments/recurring-payments
 import { ExpensesModule } from './expenses/expenses.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { GoalsModule } from './goals/goals.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { GoalsModule } from './goals/goals.module';
     ExpensesModule,
     DashboardModule,
     GoalsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
