@@ -194,7 +194,9 @@ model RecurringPaymentOccurrence {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
-  @@unique([recurringPaymentId, period])
+  // period + dueDate (no solo period) para permitir dos ocurrencias por mes
+  // en pagos quincenales (BIWEEKLY).
+  @@unique([recurringPaymentId, period, dueDate])
   @@index([period, status])
 }
 

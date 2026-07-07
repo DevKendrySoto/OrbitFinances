@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { HouseholdModule } from './household/household.module';
 import { IncomesModule } from './incomes/incomes.module';
 import { ConversionsModule } from './conversions/conversions.module';
+import { RecurringPaymentsModule } from './recurring-payments/recurring-payments.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ConversionsModule } from './conversions/conversions.module';
     AuthModule,
     IncomesModule,
     ConversionsModule,
+    RecurringPaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
