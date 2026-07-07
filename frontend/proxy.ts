@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const ACCESS_COOKIE = 'orbitfinc_access_token';
-const protectedRoutes = ['/dashboard', '/calendar', '/goals'];
+const protectedRoutes = ['/dashboard', '/calendar', '/goals', '/reports'];
 const publicOnlyRoutes = ['/login', '/register'];
 
 export default function proxy(request: NextRequest) {
@@ -20,5 +20,12 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/calendar/:path*', '/goals/:path*', '/login', '/register'],
+  matcher: [
+    '/dashboard/:path*',
+    '/calendar/:path*',
+    '/goals/:path*',
+    '/reports/:path*',
+    '/login',
+    '/register',
+  ],
 };

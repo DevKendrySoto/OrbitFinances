@@ -180,6 +180,15 @@ export default async function DashboardPage() {
           Ver metas de ahorro
         </Button>
 
+        <Button
+          variant="outline"
+          className="w-full"
+          nativeButton={false}
+          render={<Link href="/reports" />}
+        >
+          Ver reportes
+        </Button>
+
         <form action={logoutAction}>
           <Button type="submit" variant="outline" className="w-full">
             Cerrar sesión

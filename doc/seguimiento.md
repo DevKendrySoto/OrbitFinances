@@ -30,6 +30,7 @@
 - [x] Módulo de Metas de Ahorro en el backend: crear/editar meta (nombre, monto objetivo, moneda, fecha objetivo), listar con filtro de estado, ver una con historial de aportes y progreso calculado (currentAmount, progressPercent topado en 100%, remaining), agregar aportes (rechaza moneda distinta a la de la meta), auto-completado de la meta al alcanzar el objetivo. Sin `deletedAt` ni DELETE (el schema no lo tiene): "eliminar" una meta es pausarla via PATCH status=PAUSED, y los aportes son un ledger inmutable como las conversiones. Verificado end-to-end con curl contra Postgres real: progreso exacto (40% → 100% con auto-completado), rechazo de aporte en moneda incorrecta, aporte extra tras completar (topa en 100% para mostrar pero currentAmount real sigue creciendo), pausar/filtrar por estado, y aislamiento entre hogares (403 al ver o aportar a meta ajena). Tests unitarios de auto-completado y rechazo de moneda.
 - [x] Pantalla de Metas en el frontend (/goals y /goals/new): listado con barra de progreso, badge de estado, formulario de creación (RHF + Zod), aporte inline por meta, pausar/reanudar. Enlazada desde /dashboard y protegida en proxy.ts. Se encontró y corrigió un bug real: al dejar la fecha objetivo vacía se enviaba `""` en vez de omitirse, y el backend la rechazaba por formato de fecha inválido. Verificado en navegador real con Playwright: ciclo completo crear → aportar parcial (40%) → pausar → reanudar → completar con aporte final (100%, formulario de aporte desaparece), sin errores de consola.
 - [x] Módulo de Reportes en el backend: GET /reports?from&to (reporte flexible por rango de fechas que cubre diario/quincenal/histórico según el rango pedido — totales por moneda de ingresos/gastos/pagos pagados, desglose por categoría de gasto y por tipo de ingreso, listados detallados), y cierre mensual inmutable (POST /reports/closings, GET /reports/closings, GET /reports/closings/:period) usando la moneda base del hogar. Un cierre no puede crearse dos veces para el mismo período (409, coherente con la regla de negocio "el cierre mensual es inmutable"). Verificado end-to-end con curl contra Postgres real: reporte diario vs. quincenal con datos combinados de ingresos/gastos/pago pagado (totales y desglose por categoría exactos), validación de rango (from > to rechazado), cierre mensual con disponible real exacto (ingresos - gastos - pagos), rechazo del segundo cierre del mismo mes, histórico de cierres, y aislamiento entre hogares (reportes vacíos y 404 en cierre ajeno sin fuga de datos). Tests unitarios de inmutabilidad y del cálculo de disponible real.
+- [x] Pantalla de Reportes en el frontend (/reports y /reports/closings): selector de rango de fechas con atajos (Hoy, Últimos 15 días, Este mes, Últimos 90 días) y formulario de rango libre (form GET nativo, sin JS), tarjetas de totales, desglose por categoría de gasto y tipo de ingreso; página de cierres mensuales con formulario para cerrar un mes e historial. Enlazada desde /dashboard y protegida en proxy.ts. Verificado en navegador real con Playwright: reporte por defecto con totales y desgloses exactos, cambio de rango vía atajo, crear cierre mensual con disponible real exacto, y rechazo del segundo cierre del mismo mes mostrando el error sin romper la página. Sin errores de consola.
 
 ### En progreso
 - [ ] Arquitectura detallada del sistema (backend/frontend)
@@ -39,15 +40,14 @@
 - [ ] Recuperación de contraseña (requiere decidir proveedor de email)
 - [ ] Invitación formal de miembros a un hogar existente (hoy el registro solo permite unirse pasando un householdId ya conocido)
 - [ ] Renovación silenciosa del access token (hoy si expira mientras se navega el dashboard, redirige a /login sin usar el refresh token automáticamente)
-- [ ] Pantalla de Reportes en el frontend (el backend ya está listo, falta la UI)
-- [ ] Integración de IA básica
+- [ ] Integración de IA básica (detección de sobregastos, proyección de fin de mes, simulador de compra — Sprint 5 del PRD)
 
 ## Resumen de avance
 - Documentación de producto: 100%
 - Planeación técnica: 65%
-- Implementación: 95% (backend con los 6 módulos de negocio + agregación de dashboard y reportes completos; frontend cubre login, registro, calendario, dashboard real y metas — falta solo la UI de reportes)
+- Implementación: 98% (los 6 módulos de negocio del PRD completos en backend y frontend, extremo a extremo; solo quedan pendientes menores y la integración de IA, fuera del alcance del MVP)
 
 ## Próximos pasos
-1. Pantalla de reportes en el frontend (el backend ya está listo).
-2. Renovación silenciosa de sesión.
-3. Recuperación de contraseña e invitación formal de miembros al hogar.
+1. Renovación silenciosa de sesión (usar el refresh token antes de forzar logout).
+2. Recuperación de contraseña (requiere decidir proveedor de email) e invitación formal de miembros al hogar.
+3. Integración de IA básica (Sprint 5 del PRD, fuera del alcance original del MVP).
