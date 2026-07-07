@@ -19,17 +19,18 @@
 - [x] Entorno local de Postgres (docker-compose) y primera migración aplicada
 - [x] Scaffold del backend NestJS (main/app module, PrismaModule/PrismaService, endpoint /health verificado end-to-end contra Postgres real, lint y tests pasando)
 - [x] Autenticación: registro, login, JWT + refresh token con rotación, logout, guard de rutas protegidas (/auth/me), rate limiting en login/registro, validación con Zod, auditoría de auth.register y auth.login. Verificado end-to-end con curl contra Postgres real (incluye rechazo de refresh reusado/revocado) y con tests unitarios de los casos de seguridad.
+- [x] Scaffold del frontend Next.js 16 (App Router, Tailwind v4, shadcn/ui) con pantalla de login funcional: Server Actions + cookies httpOnly (sin exponer tokens al JS del navegador), React Hook Form + Zod, dashboard protegido de prueba (muestra perfil/hogar/rol desde /auth/me), logout, y `proxy.ts` (antes middleware) protegiendo /dashboard y redirigiendo /login si ya hay sesión. Verificado en navegador real con Playwright: login → dashboard → logout → redirect, y bloqueo de /dashboard sin sesión. Sin errores de consola.
 
 ### En progreso
 - [ ] Arquitectura detallada del sistema (backend/frontend)
 - [ ] Definición del flujo de trabajo de desarrollo (ramas develop/feature pendientes de crear)
-- [ ] Preparación del entorno de desarrollo (falta scaffold de Next.js)
 
 ### Pendiente
-- [ ] Configuración del frontend (Next.js)
+- [ ] Pantalla de registro en el frontend (hoy solo existe login; registro se probó vía curl al backend)
 - [ ] Recuperación de contraseña (requiere decidir proveedor de email)
 - [ ] Invitación formal de miembros a un hogar existente (hoy el registro solo permite unirse pasando un householdId ya conocido)
-- [ ] Dashboard inicial
+- [ ] Renovación silenciosa del access token (hoy si expira mientras se navega el dashboard, redirige a /login sin usar el refresh token automáticamente)
+- [ ] Dashboard real con datos financieros (el actual es solo una prueba de la sesión autenticada)
 - [ ] Módulo de ingresos
 - [ ] Módulo de pagos recurrentes
 - [ ] Módulo de reportes
@@ -38,9 +39,9 @@
 ## Resumen de avance
 - Documentación de producto: 100%
 - Planeación técnica: 65%
-- Implementación: 30% (base de datos + backend NestJS + autenticación completa; falta frontend y módulos de negocio)
+- Implementación: 40% (base de datos + backend NestJS + autenticación completa + frontend con login funcional; falta registro en UI, dashboard real y módulos de negocio)
 
 ## Próximos pasos
-1. Scaffold del frontend Next.js (incluyendo pantallas de login/registro consumiendo /auth).
-2. Implementar recuperación de contraseña e invitación de miembros al hogar.
-3. Implementar primer dashboard.
+1. Pantalla de registro en el frontend.
+2. Renovación silenciosa de sesión (usar el refresh token antes de forzar logout).
+3. Implementar primer dashboard con datos financieros reales.
