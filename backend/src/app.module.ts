@@ -6,6 +6,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { HouseholdModule } from './household/household.module';
+import { IncomesModule } from './incomes/incomes.module';
 
 @Module({
   imports: [
@@ -14,7 +16,9 @@ import { AuthModule } from './auth/auth.module';
       throttlers: [{ ttl: 60_000, limit: 100 }],
     }),
     PrismaModule,
+    HouseholdModule,
     AuthModule,
+    IncomesModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
