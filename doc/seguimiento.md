@@ -27,6 +27,7 @@
 - [x] Módulo de Gastos Variables en el backend: CRUD completo (crear, listar con filtros de mes/categoría/miembro, ver uno, editar, eliminar como soft delete) con las 7 categorías del PRD (Supermercado, Colmado, Comida, Transporte, Salidas, Otros, Imprevistos). Mismo patrón que Ingresos, reutilizando `HouseholdAccessService`. Verificado end-to-end con curl contra Postgres real: filtro por mes (YYYY-MM → rango de spentAt), filtro por categoría, validación de categoría inválida, soft delete, y aislamiento entre hogares (403 en gasto activo de otro hogar, 404 en uno ya eliminado). Tests unitarios de los casos de seguridad.
 - [x] Calendario financiero en el frontend (/calendar): lista agrupada por fecha con "Pagos vencidos" y "Próximos pagos" (agrupados por mes), badges de prioridad y de vencido, botón "Marcar pagado" por ocurrencia (Server Action que llama al backend y usa `revalidatePath` para refrescar). Reutiliza el endpoint GET /recurring-payments/occurrences del backend, al que se le agregó el include del pago recurrente (nombre/categoría/prioridad/moneda) para poder mostrarlo. Enlazado desde /dashboard y protegido en proxy.ts. Verificado en navegador real con Playwright: agrupación correcta por mes, pago exitoso que genera automáticamente la siguiente ocurrencia y la mueve de "vencidos" a "próximos" (o de vuelta a "vencidos" si el nuevo vencimiento también ya pasó), sin errores de consola. Se encontró y corrigió un bug real: sin `revalidatePath('/calendar')` tras la Server Action, el router de Next.js mostraba datos obsoletos pese a que el backend sí se había actualizado correctamente.
 - [x] Dashboard real (backend + frontend): nuevo endpoint GET /dashboard/summary que agrega datos de los 4 módulos de negocio (ingresos del mes, comprometido en pagos pendientes, gastos variables, disponible real = ingresos - comprometido - gastos, ahorro USD sin convertir, estado del mes ok/warning/critical, próximos 5 pagos). El frontend (/dashboard) ahora muestra tarjetas con estos datos reales en vez del placeholder de perfil. Verificado end-to-end con curl contra Postgres real con datos de los 4 módulos combinados (cálculos exactos confirmados a mano) y aislamiento entre hogares; y en navegador real con Playwright (incluye el caso "critical" con disponible real negativo). Tests unitarios de la lógica de agregación.
+- [x] Módulo de Metas de Ahorro en el backend: crear/editar meta (nombre, monto objetivo, moneda, fecha objetivo), listar con filtro de estado, ver una con historial de aportes y progreso calculado (currentAmount, progressPercent topado en 100%, remaining), agregar aportes (rechaza moneda distinta a la de la meta), auto-completado de la meta al alcanzar el objetivo. Sin `deletedAt` ni DELETE (el schema no lo tiene): "eliminar" una meta es pausarla via PATCH status=PAUSED, y los aportes son un ledger inmutable como las conversiones. Verificado end-to-end con curl contra Postgres real: progreso exacto (40% → 100% con auto-completado), rechazo de aporte en moneda incorrecta, aporte extra tras completar (topa en 100% para mostrar pero currentAmount real sigue creciendo), pausar/filtrar por estado, y aislamiento entre hogares (403 al ver o aportar a meta ajena). Tests unitarios de auto-completado y rechazo de moneda.
 
 ### En progreso
 - [ ] Arquitectura detallada del sistema (backend/frontend)
@@ -36,16 +37,16 @@
 - [ ] Recuperación de contraseña (requiere decidir proveedor de email)
 - [ ] Invitación formal de miembros a un hogar existente (hoy el registro solo permite unirse pasando un householdId ya conocido)
 - [ ] Renovación silenciosa del access token (hoy si expira mientras se navega el dashboard, redirige a /login sin usar el refresh token automáticamente)
-- [ ] Módulo de metas de ahorro
+- [ ] Metas de ahorro en el frontend (el backend ya está listo, falta la UI)
 - [ ] Módulo de reportes
 - [ ] Integración de IA básica
 
 ## Resumen de avance
 - Documentación de producto: 100%
 - Planeación técnica: 65%
-- Implementación: 80% (base de datos + backend NestJS + autenticación + 4 módulos de negocio + frontend completo con login, registro, calendario y dashboard real; falta metas de ahorro y reportes)
+- Implementación: 85% (base de datos + backend NestJS + autenticación + 5 módulos de negocio + frontend con login, registro, calendario y dashboard real; falta UI de metas y el módulo de reportes)
 
 ## Próximos pasos
-1. Módulo de metas de ahorro (siguiente en el roadmap del PRD).
-2. Renovación silenciosa de sesión.
-3. Módulo de reportes (diario/quincenal/mensual/histórico/cierre mensual).
+1. Pantalla de metas de ahorro en el frontend (el backend ya está listo).
+2. Módulo de reportes (diario/quincenal/mensual/histórico/cierre mensual).
+3. Renovación silenciosa de sesión.
