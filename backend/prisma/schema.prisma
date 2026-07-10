@@ -289,5 +289,6 @@ model AIRecommendation {
   dismissedAt DateTime?
   createdAt   DateTime  @default(now())
 
+  @@unique([householdId, period, type])
   @@index([householdId, createdAt])
 }

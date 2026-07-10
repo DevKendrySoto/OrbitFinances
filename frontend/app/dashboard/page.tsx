@@ -208,6 +208,15 @@ export default async function DashboardPage() {
           Ver reportes
         </Button>
 
+        <Button
+          variant="outline"
+          className="w-full"
+          nativeButton={false}
+          render={<Link href="/insights" />}
+        >
+          Ver recomendaciones
+        </Button>
+
         <form action={logoutAction}>
           <Button type="submit" variant="outline" className="w-full">
             Cerrar sesión

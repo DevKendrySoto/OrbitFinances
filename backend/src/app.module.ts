@@ -14,6 +14,7 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { GoalsModule } from './goals/goals.module';
 import { ReportsModule } from './reports/reports.module';
+import { AiInsightsModule } from './ai-insights/ai-insights.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ReportsModule } from './reports/reports.module';
     DashboardModule,
     GoalsModule,
     ReportsModule,
+    AiInsightsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

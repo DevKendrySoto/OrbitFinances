@@ -8,7 +8,15 @@ import {
 } from './lib/session-config';
 
 const BACKEND_URL = process.env.BACKEND_API_URL ?? 'http://localhost:3000';
-const protectedRoutes = ['/dashboard', '/calendar', '/goals', '/reports', '/incomes', '/expenses'];
+const protectedRoutes = [
+  '/dashboard',
+  '/calendar',
+  '/goals',
+  '/reports',
+  '/incomes',
+  '/expenses',
+  '/insights',
+];
 const publicOnlyRoutes = ['/login', '/register'];
 
 async function refreshSession(refreshToken: string) {
@@ -73,6 +81,7 @@ export const config = {
     '/reports/:path*',
     '/incomes/:path*',
     '/expenses/:path*',
+    '/insights/:path*',
     '/login',
     '/register',
   ],

@@ -3,6 +3,7 @@ import {
   formatPeriod,
   isPeriodWithinRange,
   nextPeriod,
+  previousPeriod,
 } from './period';
 
 describe('period helpers', () => {
@@ -33,6 +34,16 @@ describe('period helpers', () => {
 
     it('rolls over to January of the next year', () => {
       expect(nextPeriod('2026-12')).toBe('2027-01');
+    });
+  });
+
+  describe('previousPeriod', () => {
+    it('decrements the month within the same year', () => {
+      expect(previousPeriod('2026-07')).toBe('2026-06');
+    });
+
+    it('rolls back to December of the previous year', () => {
+      expect(previousPeriod('2026-01')).toBe('2025-12');
     });
   });
 

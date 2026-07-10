@@ -31,6 +31,13 @@ export function nextPeriod(period: string): string {
     : `${year}-${String(month + 1).padStart(2, '0')}`;
 }
 
+export function previousPeriod(period: string): string {
+  const { year, month } = parsePeriod(period);
+  return month === 1
+    ? `${year - 1}-12`
+    : `${year}-${String(month - 1).padStart(2, '0')}`;
+}
+
 /** true si `period` cae dentro de [startDate, endDate] (endDate opcional = sin límite). */
 export function isPeriodWithinRange(
   period: string,
