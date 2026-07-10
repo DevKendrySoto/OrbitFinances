@@ -34,6 +34,7 @@
 - [x] Pantallas de Ingresos y Gastos en el frontend (/incomes, /incomes/new, /expenses, /expenses/new): listado + crear + eliminar para ambos módulos, mismo patrón que Metas. **Corrige un hueco real**: hasta ahora estos dos módulos solo existían como API de backend (se usaban indirectamente vía Dashboard/Reportes o se cargaban por curl) — no había forma de registrar un ingreso o gasto desde el navegador. De paso se encontró y corrigió un bug real en `lib/backend.ts`: `backendFetch` siempre llamaba a `res.json()`, lo que rompía en cualquier respuesta `204 No Content` (como el DELETE de ingresos/gastos); ahora retorna `undefined` en ese caso. Verificado en navegador real con Playwright con la cuenta demo: listado muestra los datos ya sembrados, crear + eliminar funciona en ambos módulos, sin errores de consola.
 - [x] Pantalla de Conversión USD → DOP en el frontend (/incomes/[id]/convert): integrada dentro de cada ingreso en USD (así lo modela el backend) en vez de como módulo aparte — la fila de un ingreso USD en /incomes ahora muestra el saldo restante por convertir y un botón "Convertir". La página muestra saldo disponible/convertido, formulario de nueva conversión (monto USD + tasa) y el historial completo. **Cierra el último hueco estructural**: era el único módulo de negocio del PRD que seguía siendo solo-API. Verificado en navegador real con Playwright con la cuenta demo: saldo restante correcto en el listado, conversión parcial nueva (US$100 a tasa 59 → RD$5,900.00 exacto) que actualiza el saldo y el historial al instante, y rechazo de sobregiro mostrando el mensaje del backend sin romper la página. Sin errores de consola.
 - [x] Edición de Ingresos, Gastos y Metas desde el frontend (/incomes/[id]/edit, /expenses/[id]/edit, /goals/[id]/edit): formularios de edición que reutilizan los mismos componentes de creación con datos precargados. La moneda queda fija (no editable) en los tres para no dejar inconsistente el historial de conversiones/aportes ya asociado; el estado de una meta se sigue manejando aparte (pausar/reanudar). Enlazadas desde cada listado. Verificado en navegador real con Playwright con la cuenta demo: editar monto de un gasto, descripción de un ingreso, y monto objetivo de una meta — los tres reflejan el cambio al instante sin errores de consola.
+- [x] Renovación silenciosa de sesión: la lógica vive en `proxy.ts` (middleware), no en cada página, porque un Server Component no puede mutar cookies durante el render (solo Server Actions/Route Handlers pueden) — el middleware sí puede escribir cookies en la respuesta antes de que la request llegue a la página. Cuando la cookie del access token (15 min) ya expiró y el navegador la borró sola, pero la del refresh token (30 días) sigue presente, el middleware llama a POST /auth/refresh, guarda el par de tokens nuevo (rotado) como cookies httpOnly en la respuesta, y deja pasar la request normalmente — sin redirigir a /login. Si el refresh token también falta o es inválido, sí redirige a /login y limpia cookies, como antes. Se extrajeron los nombres de cookie/TTLs/opciones a `lib/session-config.ts` (constantes puras, sin `next/headers`) para que tanto `lib/session.ts` (Server Actions) como `proxy.ts` (Edge middleware, otra API de cookies) compartan la misma config sin duplicarla. Verificado en navegador real con Playwright: login normal, se borra manualmente la cookie de access token (simula la expiración natural a los 15 min) dejando la de refresh, se navega a /incomes y la sesión se renueva en silencio (URL se mantiene en /incomes, cookies nuevas emitidas, refresh token rotado, datos reales de la cuenta demo visibles, sin errores de consola); y con las dos cookies borradas sí redirige a /login como corresponde.
 
 ### En progreso
 - [ ] Arquitectura detallada del sistema (backend/frontend)
@@ -42,18 +43,16 @@
 ### Pendiente
 - [ ] Recuperación de contraseña (requiere decidir proveedor de email)
 - [ ] Invitación formal de miembros a un hogar existente (hoy el registro solo permite unirse pasando un householdId ya conocido)
-- [ ] Renovación silenciosa del access token (hoy si expira mientras se navega el dashboard, redirige a /login sin usar el refresh token automáticamente)
 - [ ] Integración de IA básica (detección de sobregastos, proyección de fin de mes, simulador de compra — Sprint 5 del PRD)
 
 ## Resumen de avance
 - Documentación de producto: 100%
 - Planeación técnica: 65%
-- Implementación: 100% del alcance funcional del MVP (los 6 módulos de negocio del PRD completos en backend y frontend, con CRUD completo real donde aplica; solo quedan pendientes de robustez de sesión/cuenta y la integración de IA, fuera del alcance original del MVP)
+- Implementación: 100% del alcance funcional del MVP (los 6 módulos de negocio del PRD completos en backend y frontend, con CRUD completo real donde aplica, más renovación silenciosa de sesión; solo quedan pendientes de cuenta/hogar (recuperación de contraseña, invitaciones) y la integración de IA, fuera del alcance original del MVP)
 
 ## Próximos pasos
-1. Renovación silenciosa de sesión (usar el refresh token antes de forzar logout).
-2. Recuperación de contraseña e invitación formal de miembros al hogar.
-3. Integración de IA básica (Sprint 5 del PRD, fuera del alcance original del MVP).
+1. Recuperación de contraseña e invitación formal de miembros al hogar.
+2. Integración de IA básica (Sprint 5 del PRD, fuera del alcance original del MVP).
 
 ## Cuenta de prueba (demo)
 Creada el 2026-07-07 para pruebas manuales desde el frontend, con datos de ejemplo en todos los módulos:
