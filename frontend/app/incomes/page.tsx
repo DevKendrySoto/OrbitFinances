@@ -19,6 +19,10 @@ interface Income {
   receivedAt: string;
 }
 
+interface Balance {
+  remainingUsd: string;
+}
+
 export default async function IncomesPage() {
   const accessToken = await getAccessToken();
   if (!accessToken) {
@@ -36,6 +40,18 @@ export default async function IncomesPage() {
     }
     throw error;
   }
+
+  const usdBalances = new Map<string, string>();
+  await Promise.all(
+    incomes
+      .filter((income) => income.currency === 'USD')
+      .map(async (income) => {
+        const balance: Balance = await backendFetch(`/conversions/balance/${income.id}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        usdBalances.set(income.id, balance.remainingUsd);
+      }),
+  );
 
   return (
     <main className="min-h-screen bg-muted/40 p-4">
@@ -69,9 +85,24 @@ export default async function IncomesPage() {
                   <p className="text-muted-foreground">
                     {formatDueDate(income.receivedAt)} · {income.period}
                   </p>
+                  {income.currency === 'USD' && (
+                    <p className="text-xs text-muted-foreground">
+                      Restante por convertir: {formatMoney(usdBalances.get(income.id) ?? '0', 'USD')}
+                    </p>
+                  )}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <span className="font-medium">{formatMoney(income.amount, income.currency)}</span>
+                  {income.currency === 'USD' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      nativeButton={false}
+                      render={<Link href={`/incomes/${income.id}/convert`} />}
+                    >
+                      Convertir
+                    </Button>
+                  )}
                   <form action={deleteIncomeAction.bind(null, income.id)}>
                     <Button type="submit" variant="outline" size="sm">
                       Eliminar
