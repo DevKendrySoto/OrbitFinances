@@ -1,39 +1,65 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { createExpenseAction } from '@/app/expenses/actions';
-import { createExpenseSchema, type CreateExpenseValues } from '@/lib/validators/expense';
+import { createExpenseAction, updateExpenseAction } from '@/app/expenses/actions';
+import {
+  createExpenseSchema,
+  editExpenseSchema,
+  type CreateExpenseValues,
+} from '@/lib/validators/expense';
 import { EXPENSE_CATEGORY_LABEL } from '@/lib/categories';
 import { today } from '@/lib/date-range';
 
-export function ExpenseForm() {
+interface ExistingExpense {
+  id: string;
+  category: string;
+  currency: 'USD' | 'DOP';
+  amount: string;
+  spentAt: string;
+  description: string | null;
+}
+
+export function ExpenseForm({ expense }: { expense?: ExistingExpense }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const isEdit = Boolean(expense);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<CreateExpenseValues>({
-    resolver: zodResolver(createExpenseSchema),
-    defaultValues: {
-      currency: 'DOP',
-      category: 'SUPERMARKET',
-      spentAt: today(),
-    },
+    resolver: zodResolver(
+      isEdit ? editExpenseSchema : createExpenseSchema,
+    ) as unknown as Resolver<CreateExpenseValues>,
+    defaultValues: expense
+      ? {
+          category: expense.category as CreateExpenseValues['category'],
+          currency: expense.currency,
+          amount: Number(expense.amount),
+          spentAt: expense.spentAt.slice(0, 10),
+          description: expense.description ?? '',
+        }
+      : {
+          currency: 'DOP',
+          category: 'SUPERMARKET',
+          spentAt: today(),
+        },
   });
 
   function onSubmit(values: CreateExpenseValues) {
     setServerError(null);
     startTransition(async () => {
-      const result = await createExpenseAction(values);
+      const result = expense
+        ? await updateExpenseAction(expense.id, values)
+        : await createExpenseAction(values);
       if (!result.success) {
-        setServerError(result.message ?? 'No se pudo registrar el gasto');
+        setServerError(result.message ?? 'No se pudo guardar el gasto');
       }
     });
   }
@@ -57,14 +83,20 @@ export function ExpenseForm() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="currency">Moneda</Label>
-          <select
-            id="currency"
-            className="h-8 w-full rounded-lg border border-border bg-background px-2.5 text-sm"
-            {...register('currency')}
-          >
-            <option value="DOP">DOP</option>
-            <option value="USD">USD</option>
-          </select>
+          {isEdit ? (
+            <p className="flex h-8 items-center text-sm text-muted-foreground">
+              {expense!.currency} (no editable)
+            </p>
+          ) : (
+            <select
+              id="currency"
+              className="h-8 w-full rounded-lg border border-border bg-background px-2.5 text-sm"
+              {...register('currency')}
+            >
+              <option value="DOP">DOP</option>
+              <option value="USD">USD</option>
+            </select>
+          )}
         </div>
       </div>
 
@@ -93,7 +125,7 @@ export function ExpenseForm() {
       {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? 'Guardando...' : 'Registrar gasto'}
+        {isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Registrar gasto'}
       </Button>
     </form>
   );

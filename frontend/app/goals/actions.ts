@@ -4,7 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { backendFetch, BackendError } from '@/lib/backend';
 import { getAccessToken } from '@/lib/session';
-import { createGoalSchema, type CreateGoalValues } from '@/lib/validators/goal';
+import {
+  createGoalSchema,
+  editGoalSchema,
+  type CreateGoalValues,
+  type EditGoalValues,
+} from '@/lib/validators/goal';
 
 interface ActionResult {
   success: boolean;
@@ -25,6 +30,40 @@ export async function createGoalAction(values: CreateGoalValues): Promise<Action
   try {
     await backendFetch('/goals', {
       method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({
+        ...parsed.data,
+        targetDate: parsed.data.targetDate || undefined,
+      }),
+    });
+  } catch (error) {
+    if (error instanceof BackendError) {
+      return { success: false, message: error.message };
+    }
+    return { success: false, message: 'No se pudo conectar con el servidor' };
+  }
+
+  revalidatePath('/goals');
+  redirect('/goals');
+}
+
+export async function updateGoalAction(
+  goalId: string,
+  values: EditGoalValues,
+): Promise<ActionResult> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    redirect('/login');
+  }
+
+  const parsed = editGoalSchema.safeParse(values);
+  if (!parsed.success) {
+    return { success: false, message: 'Datos inválidos' };
+  }
+
+  try {
+    await backendFetch(`/goals/${goalId}`, {
+      method: 'PATCH',
       headers: { Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({
         ...parsed.data,

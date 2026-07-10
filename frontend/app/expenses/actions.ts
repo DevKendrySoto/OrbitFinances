@@ -4,7 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { backendFetch, BackendError } from '@/lib/backend';
 import { getAccessToken } from '@/lib/session';
-import { createExpenseSchema, type CreateExpenseValues } from '@/lib/validators/expense';
+import {
+  createExpenseSchema,
+  editExpenseSchema,
+  type CreateExpenseValues,
+  type EditExpenseValues,
+} from '@/lib/validators/expense';
 
 interface ActionResult {
   success: boolean;
@@ -25,6 +30,40 @@ export async function createExpenseAction(values: CreateExpenseValues): Promise<
   try {
     await backendFetch('/expenses', {
       method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({
+        ...parsed.data,
+        description: parsed.data.description || undefined,
+      }),
+    });
+  } catch (error) {
+    if (error instanceof BackendError) {
+      return { success: false, message: error.message };
+    }
+    return { success: false, message: 'No se pudo conectar con el servidor' };
+  }
+
+  revalidatePath('/expenses');
+  redirect('/expenses');
+}
+
+export async function updateExpenseAction(
+  expenseId: string,
+  values: EditExpenseValues,
+): Promise<ActionResult> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    redirect('/login');
+  }
+
+  const parsed = editExpenseSchema.safeParse(values);
+  if (!parsed.success) {
+    return { success: false, message: 'Datos inválidos' };
+  }
+
+  try {
+    await backendFetch(`/expenses/${expenseId}`, {
+      method: 'PATCH',
       headers: { Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({
         ...parsed.data,

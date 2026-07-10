@@ -1,30 +1,53 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { createGoalAction } from '@/app/goals/actions';
-import { createGoalSchema, type CreateGoalValues } from '@/lib/validators/goal';
+import { createGoalAction, updateGoalAction } from '@/app/goals/actions';
+import { createGoalSchema, editGoalSchema, type CreateGoalValues } from '@/lib/validators/goal';
 
-export function GoalForm() {
+interface ExistingGoal {
+  id: string;
+  name: string;
+  targetAmount: string;
+  currency: 'USD' | 'DOP';
+  targetDate: string | null;
+}
+
+export function GoalForm({ goal }: { goal?: ExistingGoal }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const isEdit = Boolean(goal);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<CreateGoalValues>({ resolver: zodResolver(createGoalSchema) });
+  } = useForm<CreateGoalValues>({
+    resolver: zodResolver(
+      isEdit ? editGoalSchema : createGoalSchema,
+    ) as unknown as Resolver<CreateGoalValues>,
+    defaultValues: goal
+      ? {
+          name: goal.name,
+          targetAmount: Number(goal.targetAmount),
+          currency: goal.currency,
+          targetDate: goal.targetDate ? goal.targetDate.slice(0, 10) : '',
+        }
+      : undefined,
+  });
 
   function onSubmit(values: CreateGoalValues) {
     setServerError(null);
     startTransition(async () => {
-      const result = await createGoalAction(values);
+      const result = goal
+        ? await updateGoalAction(goal.id, values)
+        : await createGoalAction(values);
       if (!result.success) {
-        setServerError(result.message ?? 'No se pudo crear la meta');
+        setServerError(result.message ?? 'No se pudo guardar la meta');
       }
     });
   }
@@ -53,15 +76,21 @@ export function GoalForm() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="currency">Moneda</Label>
-          <select
-            id="currency"
-            defaultValue="DOP"
-            className="h-8 w-full rounded-lg border border-border bg-background px-2.5 text-sm"
-            {...register('currency')}
-          >
-            <option value="DOP">DOP</option>
-            <option value="USD">USD</option>
-          </select>
+          {isEdit ? (
+            <p className="flex h-8 items-center text-sm text-muted-foreground">
+              {goal!.currency} (no editable)
+            </p>
+          ) : (
+            <select
+              id="currency"
+              defaultValue="DOP"
+              className="h-8 w-full rounded-lg border border-border bg-background px-2.5 text-sm"
+              {...register('currency')}
+            >
+              <option value="DOP">DOP</option>
+              <option value="USD">USD</option>
+            </select>
+          )}
         </div>
       </div>
 
@@ -73,7 +102,7 @@ export function GoalForm() {
       {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? 'Creando...' : 'Crear meta'}
+        {isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Crear meta'}
       </Button>
     </form>
   );

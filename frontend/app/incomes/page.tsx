@@ -103,6 +103,14 @@ export default async function IncomesPage() {
                       Convertir
                     </Button>
                   )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    nativeButton={false}
+                    render={<Link href={`/incomes/${income.id}/edit`} />}
+                  >
+                    Editar
+                  </Button>
                   <form action={deleteIncomeAction.bind(null, income.id)}>
                     <Button type="submit" variant="outline" size="sm">
                       Eliminar

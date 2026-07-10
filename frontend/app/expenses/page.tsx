@@ -71,6 +71,14 @@ export default async function ExpensesPage() {
                   <span className="font-medium">
                     {formatMoney(expense.amount, expense.currency)}
                   </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    nativeButton={false}
+                    render={<Link href={`/expenses/${expense.id}/edit`} />}
+                  >
+                    Editar
+                  </Button>
                   <form action={deleteExpenseAction.bind(null, expense.id)}>
                     <Button type="submit" variant="outline" size="sm">
                       Eliminar

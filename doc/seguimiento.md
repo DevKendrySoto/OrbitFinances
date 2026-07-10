@@ -33,6 +33,7 @@
 - [x] Pantalla de Reportes en el frontend (/reports y /reports/closings): selector de rango de fechas con atajos (Hoy, Últimos 15 días, Este mes, Últimos 90 días) y formulario de rango libre (form GET nativo, sin JS), tarjetas de totales, desglose por categoría de gasto y tipo de ingreso; página de cierres mensuales con formulario para cerrar un mes e historial. Enlazada desde /dashboard y protegida en proxy.ts. Verificado en navegador real con Playwright: reporte por defecto con totales y desgloses exactos, cambio de rango vía atajo, crear cierre mensual con disponible real exacto, y rechazo del segundo cierre del mismo mes mostrando el error sin romper la página. Sin errores de consola.
 - [x] Pantallas de Ingresos y Gastos en el frontend (/incomes, /incomes/new, /expenses, /expenses/new): listado + crear + eliminar para ambos módulos, mismo patrón que Metas. **Corrige un hueco real**: hasta ahora estos dos módulos solo existían como API de backend (se usaban indirectamente vía Dashboard/Reportes o se cargaban por curl) — no había forma de registrar un ingreso o gasto desde el navegador. De paso se encontró y corrigió un bug real en `lib/backend.ts`: `backendFetch` siempre llamaba a `res.json()`, lo que rompía en cualquier respuesta `204 No Content` (como el DELETE de ingresos/gastos); ahora retorna `undefined` en ese caso. Verificado en navegador real con Playwright con la cuenta demo: listado muestra los datos ya sembrados, crear + eliminar funciona en ambos módulos, sin errores de consola.
 - [x] Pantalla de Conversión USD → DOP en el frontend (/incomes/[id]/convert): integrada dentro de cada ingreso en USD (así lo modela el backend) en vez de como módulo aparte — la fila de un ingreso USD en /incomes ahora muestra el saldo restante por convertir y un botón "Convertir". La página muestra saldo disponible/convertido, formulario de nueva conversión (monto USD + tasa) y el historial completo. **Cierra el último hueco estructural**: era el único módulo de negocio del PRD que seguía siendo solo-API. Verificado en navegador real con Playwright con la cuenta demo: saldo restante correcto en el listado, conversión parcial nueva (US$100 a tasa 59 → RD$5,900.00 exacto) que actualiza el saldo y el historial al instante, y rechazo de sobregiro mostrando el mensaje del backend sin romper la página. Sin errores de consola.
+- [x] Edición de Ingresos, Gastos y Metas desde el frontend (/incomes/[id]/edit, /expenses/[id]/edit, /goals/[id]/edit): formularios de edición que reutilizan los mismos componentes de creación con datos precargados. La moneda queda fija (no editable) en los tres para no dejar inconsistente el historial de conversiones/aportes ya asociado; el estado de una meta se sigue manejando aparte (pausar/reanudar). Enlazadas desde cada listado. Verificado en navegador real con Playwright con la cuenta demo: editar monto de un gasto, descripción de un ingreso, y monto objetivo de una meta — los tres reflejan el cambio al instante sin errores de consola.
 
 ### En progreso
 - [ ] Arquitectura detallada del sistema (backend/frontend)
@@ -42,19 +43,17 @@
 - [ ] Recuperación de contraseña (requiere decidir proveedor de email)
 - [ ] Invitación formal de miembros a un hogar existente (hoy el registro solo permite unirse pasando un householdId ya conocido)
 - [ ] Renovación silenciosa del access token (hoy si expira mientras se navega el dashboard, redirige a /login sin usar el refresh token automáticamente)
-- [ ] Edición de ingresos/gastos/metas desde el frontend (hoy solo crear/listar/eliminar; editar existe en el backend pero no tiene UI)
 - [ ] Integración de IA básica (detección de sobregastos, proyección de fin de mes, simulador de compra — Sprint 5 del PRD)
 
 ## Resumen de avance
 - Documentación de producto: 100%
 - Planeación técnica: 65%
-- Implementación: 100% del alcance funcional del MVP (los 6 módulos de negocio del PRD completos en backend y frontend, cada uno con una pantalla real y navegable; solo quedan pendientes menores de robustez y la integración de IA, fuera del alcance original del MVP)
+- Implementación: 100% del alcance funcional del MVP (los 6 módulos de negocio del PRD completos en backend y frontend, con CRUD completo real donde aplica; solo quedan pendientes de robustez de sesión/cuenta y la integración de IA, fuera del alcance original del MVP)
 
 ## Próximos pasos
 1. Renovación silenciosa de sesión (usar el refresh token antes de forzar logout).
-2. Edición de ingresos/gastos/metas desde el frontend.
-3. Recuperación de contraseña e invitación formal de miembros al hogar.
-4. Integración de IA básica (Sprint 5 del PRD, fuera del alcance original del MVP).
+2. Recuperación de contraseña e invitación formal de miembros al hogar.
+3. Integración de IA básica (Sprint 5 del PRD, fuera del alcance original del MVP).
 
 ## Cuenta de prueba (demo)
 Creada el 2026-07-07 para pruebas manuales desde el frontend, con datos de ejemplo en todos los módulos:

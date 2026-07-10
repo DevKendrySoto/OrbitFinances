@@ -9,3 +9,8 @@ export const createIncomeSchema = z.object({
   description: z.string().optional(),
 });
 export type CreateIncomeValues = z.infer<typeof createIncomeSchema>;
+
+// La moneda no se puede editar tras crear el ingreso: si ya tiene
+// conversiones USD->DOP asociadas, cambiarla dejaría el historial inconsistente.
+export const editIncomeSchema = createIncomeSchema.omit({ currency: true });
+export type EditIncomeValues = z.infer<typeof editIncomeSchema>;

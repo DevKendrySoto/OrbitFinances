@@ -66,9 +66,17 @@ export default async function GoalsPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{goal.name}</CardTitle>
-                <Badge variant={GOAL_STATUS_VARIANT[goal.status]}>
-                  {GOAL_STATUS_LABEL[goal.status]}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={GOAL_STATUS_VARIANT[goal.status]}>
+                    {GOAL_STATUS_LABEL[goal.status]}
+                  </Badge>
+                  <Link
+                    href={`/goals/${goal.id}/edit`}
+                    className="text-xs text-muted-foreground underline underline-offset-4"
+                  >
+                    Editar
+                  </Link>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

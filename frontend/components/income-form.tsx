@@ -1,40 +1,64 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { createIncomeAction } from '@/app/incomes/actions';
-import { createIncomeSchema, type CreateIncomeValues } from '@/lib/validators/income';
+import { createIncomeAction, updateIncomeAction } from '@/app/incomes/actions';
+import { createIncomeSchema, editIncomeSchema, type CreateIncomeValues } from '@/lib/validators/income';
 import { today } from '@/lib/date-range';
 
-export function IncomeForm() {
+interface ExistingIncome {
+  id: string;
+  type: 'SALARY' | 'FREELANCE' | 'OTHER';
+  currency: 'USD' | 'DOP';
+  amount: string;
+  period: string;
+  receivedAt: string;
+  description: string | null;
+}
+
+export function IncomeForm({ income }: { income?: ExistingIncome }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const todayValue = today();
+  const isEdit = Boolean(income);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<CreateIncomeValues>({
-    resolver: zodResolver(createIncomeSchema),
-    defaultValues: {
-      currency: 'DOP',
-      type: 'SALARY',
-      period: todayValue.slice(0, 7),
-      receivedAt: todayValue,
-    },
+    resolver: zodResolver(
+      isEdit ? editIncomeSchema : createIncomeSchema,
+    ) as unknown as Resolver<CreateIncomeValues>,
+    defaultValues: income
+      ? {
+          type: income.type,
+          currency: income.currency,
+          amount: Number(income.amount),
+          period: income.period,
+          receivedAt: income.receivedAt.slice(0, 10),
+          description: income.description ?? '',
+        }
+      : {
+          currency: 'DOP',
+          type: 'SALARY',
+          period: todayValue.slice(0, 7),
+          receivedAt: todayValue,
+        },
   });
 
   function onSubmit(values: CreateIncomeValues) {
     setServerError(null);
     startTransition(async () => {
-      const result = await createIncomeAction(values);
+      const result = income
+        ? await updateIncomeAction(income.id, values)
+        : await createIncomeAction(values);
       if (!result.success) {
-        setServerError(result.message ?? 'No se pudo registrar el ingreso');
+        setServerError(result.message ?? 'No se pudo guardar el ingreso');
       }
     });
   }
@@ -56,14 +80,20 @@ export function IncomeForm() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="currency">Moneda</Label>
-          <select
-            id="currency"
-            className="h-8 w-full rounded-lg border border-border bg-background px-2.5 text-sm"
-            {...register('currency')}
-          >
-            <option value="DOP">DOP</option>
-            <option value="USD">USD</option>
-          </select>
+          {isEdit ? (
+            <p className="flex h-8 items-center text-sm text-muted-foreground">
+              {income!.currency} (no editable)
+            </p>
+          ) : (
+            <select
+              id="currency"
+              className="h-8 w-full rounded-lg border border-border bg-background px-2.5 text-sm"
+              {...register('currency')}
+            >
+              <option value="DOP">DOP</option>
+              <option value="USD">USD</option>
+            </select>
+          )}
         </div>
       </div>
 
@@ -99,7 +129,7 @@ export function IncomeForm() {
       {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? 'Guardando...' : 'Registrar ingreso'}
+        {isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Registrar ingreso'}
       </Button>
     </form>
   );

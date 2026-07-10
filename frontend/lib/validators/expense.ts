@@ -16,3 +16,6 @@ export const createExpenseSchema = z.object({
   description: z.string().optional(),
 });
 export type CreateExpenseValues = z.infer<typeof createExpenseSchema>;
+
+export const editExpenseSchema = createExpenseSchema.omit({ currency: true });
+export type EditExpenseValues = z.infer<typeof editExpenseSchema>;
