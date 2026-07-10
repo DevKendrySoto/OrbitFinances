@@ -21,9 +21,9 @@ No hace falta configurar CORS: el frontend nunca llama al backend desde el naveg
 2. **Root Directory**: `backend`
 3. **Build Command**:
    ```
-   npm install && npm run build && npx prisma migrate deploy
+   npm install --include=dev && npm run build && npx prisma migrate deploy
    ```
-   (`npm run build` ya corre `prisma generate` internamente; `migrate deploy` aplica migraciones nuevas en cada despliegue futuro sin pedir confirmación interactiva.)
+   (`npm run build` ya corre `prisma generate` internamente; `migrate deploy` aplica migraciones nuevas en cada despliegue futuro sin pedir confirmación interactiva. El `--include=dev` es obligatorio: con `NODE_ENV=production` puesto como variable de entorno, `npm install` por defecto se salta las `devDependencies` — y ahí vive `@nestjs/cli`, que provee el comando `nest` que usa `npm run build`. Sin esta flag el build falla con `nest: not found`.)
 4. **Start Command**:
    ```
    npm run start:prod
