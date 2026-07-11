@@ -88,4 +88,23 @@ describe('DashboardService', () => {
     expect(result.availableReal.DOP.toString()).toBe('-10000');
     expect(result.monthStatus).toBe('critical');
   });
+
+  it('adds DOP converted this period to availableReal.DOP', async () => {
+    prisma.income.findMany.mockResolvedValue([
+      { amount: new Prisma.Decimal(10000), currency: 'DOP' },
+    ]);
+    prisma.income.aggregate.mockResolvedValue({ _sum: { amount: null } });
+    // First aggregate call is the all-time USD-converted total (savingsUsd),
+    // second is this period's amountDop converted — same mocked method, order matters.
+    prisma.currencyConversion.aggregate
+      .mockResolvedValueOnce({ _sum: { amountUsd: new Prisma.Decimal(200) } })
+      .mockResolvedValueOnce({
+        _sum: { amountDop: new Prisma.Decimal(11800) },
+      });
+
+    const result = await service.getSummary('user-1', { month: '2026-07' });
+
+    expect(result.convertedToDop.toString()).toBe('11800');
+    expect(result.availableReal.DOP.toString()).toBe('21800');
+  });
 });

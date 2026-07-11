@@ -46,6 +46,7 @@ export class DashboardService {
       occurrences,
       usdIncomeTotal,
       usdConvertedTotal,
+      convertedThisPeriod,
       upcomingPayments,
     ] = await Promise.all([
       this.prisma.income.findMany({
@@ -79,6 +80,10 @@ export class DashboardService {
         where: { householdId },
         _sum: { amountUsd: true },
       }),
+      this.prisma.currencyConversion.aggregate({
+        where: { householdId, convertedAt: { gte: monthStart, lt: monthEnd } },
+        _sum: { amountDop: true },
+      }),
       this.prisma.recurringPaymentOccurrence.findMany({
         where: { recurringPayment: { householdId }, status: 'PENDING' },
         orderBy: { dueDate: 'asc' },
@@ -101,8 +106,13 @@ export class DashboardService {
     for (const row of occurrences)
       addTo(committed, row.recurringPayment.currency, row.amount);
 
+    const convertedToDop =
+      convertedThisPeriod._sum.amountDop ?? new Prisma.Decimal(0);
+
     const availableReal: CurrencyTotals = {
-      DOP: income.DOP.minus(committed.DOP).minus(expensesTotal.DOP),
+      DOP: income.DOP.minus(committed.DOP)
+        .minus(expensesTotal.DOP)
+        .add(convertedToDop),
       USD: income.USD.minus(committed.USD).minus(expensesTotal.USD),
     };
 
@@ -127,6 +137,7 @@ export class DashboardService {
       committed,
       expenses: expensesTotal,
       availableReal,
+      convertedToDop,
       savingsUsd,
       monthStatus,
       upcomingPayments,

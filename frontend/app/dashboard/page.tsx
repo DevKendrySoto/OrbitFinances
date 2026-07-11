@@ -41,6 +41,7 @@ interface DashboardSummary {
   committed: CurrencyTotals;
   expenses: CurrencyTotals;
   availableReal: CurrencyTotals;
+  convertedToDop: string;
   savingsUsd: string;
   monthStatus: 'ok' | 'warning' | 'critical';
   upcomingPayments: UpcomingPayment[];
@@ -125,14 +126,24 @@ export default async function DashboardPage() {
         </div>
 
         {hasUsdActivity && (
-          <Card>
-            <CardHeader>
-              <CardDescription>Ahorro en USD sin convertir</CardDescription>
-              <CardTitle className="text-2xl">
-                {formatMoney(summary.savingsUsd, 'USD')}
-              </CardTitle>
-            </CardHeader>
-          </Card>
+          <div className="grid grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardDescription>Ahorro en USD sin convertir</CardDescription>
+                <CardTitle className="text-2xl">
+                  {formatMoney(summary.savingsUsd, 'USD')}
+                </CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardDescription>Convertido a pesos este mes</CardDescription>
+                <CardTitle className="text-2xl">
+                  {formatMoney(summary.convertedToDop, 'DOP')}
+                </CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
         )}
 
         <Card>
