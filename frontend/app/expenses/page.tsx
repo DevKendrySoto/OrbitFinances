@@ -18,11 +18,17 @@ interface Expense {
   spentAt: string;
 }
 
-export default async function ExpensesPage() {
+export default async function ExpensesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const accessToken = await getAccessToken();
   if (!accessToken) {
     redirect('/login');
   }
+
+  const { error: errorMessage } = await searchParams;
 
   let expenses: Expense[];
   try {
@@ -49,6 +55,12 @@ export default async function ExpensesPage() {
         <Button className="w-full" nativeButton={false} render={<Link href="/expenses/new" />}>
           Nuevo gasto
         </Button>
+
+        {errorMessage && (
+          <p className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            {errorMessage}
+          </p>
+        )}
 
         {expenses.length === 0 && (
           <p className="text-center text-sm text-muted-foreground">

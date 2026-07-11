@@ -89,10 +89,17 @@ export async function deleteExpenseAction(expenseId: string) {
     redirect('/login');
   }
 
-  await backendFetch(`/expenses/${expenseId}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  try {
+    await backendFetch(`/expenses/${expenseId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  } catch (error) {
+    if (error instanceof BackendError) {
+      redirect(`/expenses?error=${encodeURIComponent(error.message)}`);
+    }
+    throw error;
+  }
 
   revalidatePath('/expenses');
   revalidatePath('/dashboard');

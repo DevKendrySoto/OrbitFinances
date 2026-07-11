@@ -89,10 +89,17 @@ export async function deleteIncomeAction(incomeId: string) {
     redirect('/login');
   }
 
-  await backendFetch(`/incomes/${incomeId}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  try {
+    await backendFetch(`/incomes/${incomeId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  } catch (error) {
+    if (error instanceof BackendError) {
+      redirect(`/incomes?error=${encodeURIComponent(error.message)}`);
+    }
+    throw error;
+  }
 
   revalidatePath('/incomes');
   revalidatePath('/dashboard');
