@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -122,6 +123,15 @@ export class IncomesService {
 
   async remove(userId: string, id: string) {
     const income = await this.findOne(userId, id);
+
+    const conversionCount = await this.prisma.currencyConversion.count({
+      where: { incomeId: income.id },
+    });
+    if (conversionCount > 0) {
+      throw new BadRequestException(
+        'No se puede eliminar un ingreso con conversiones registradas (el historial de conversiones es inmutable)',
+      );
+    }
 
     await this.prisma.income.update({
       where: { id: income.id },

@@ -1,4 +1,8 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { IncomesService } from './incomes.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { HouseholdAccessService } from '../household/household-access.service';
@@ -12,6 +16,7 @@ describe('IncomesService', () => {
       findUnique: jest.Mock;
       update: jest.Mock;
     };
+    currencyConversion: { count: jest.Mock };
     householdMember: { findUnique: jest.Mock };
     auditLog: { create: jest.Mock };
   };
@@ -25,6 +30,7 @@ describe('IncomesService', () => {
         findUnique: jest.fn(),
         update: jest.fn(),
       },
+      currencyConversion: { count: jest.fn() },
       householdMember: { findUnique: jest.fn() },
       auditLog: { create: jest.fn() },
     };
@@ -119,6 +125,50 @@ describe('IncomesService', () => {
           memberId: 'member-2',
         }),
       ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('remove', () => {
+    it('rejects deleting an income that already has conversions', async () => {
+      prisma.income.findUnique.mockResolvedValue({
+        id: 'income-1',
+        householdId: 'household-1',
+        deletedAt: null,
+      });
+      householdAccess.getMembership.mockResolvedValue({
+        id: 'member-1',
+        householdId: 'household-1',
+      });
+      prisma.currencyConversion.count.mockResolvedValue(2);
+
+      await expect(incomesService.remove('user-1', 'income-1')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prisma.income.update).not.toHaveBeenCalled();
+    });
+
+    it('soft-deletes an income with no conversions', async () => {
+      prisma.income.findUnique.mockResolvedValue({
+        id: 'income-1',
+        householdId: 'household-1',
+        deletedAt: null,
+      });
+      householdAccess.getMembership.mockResolvedValue({
+        id: 'member-1',
+        householdId: 'household-1',
+      });
+      prisma.currencyConversion.count.mockResolvedValue(0);
+      let receivedData: { deletedAt?: Date } | undefined;
+      prisma.income.update.mockImplementation(
+        (args: { data: typeof receivedData }) => {
+          receivedData = args.data;
+          return Promise.resolve({});
+        },
+      );
+
+      await incomesService.remove('user-1', 'income-1');
+
+      expect(receivedData?.deletedAt).toBeInstanceOf(Date);
     });
   });
 });
