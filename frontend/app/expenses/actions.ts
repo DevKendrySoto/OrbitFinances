@@ -44,6 +44,7 @@ export async function createExpenseAction(values: CreateExpenseValues): Promise<
   }
 
   revalidatePath('/expenses');
+  revalidatePath('/dashboard');
   redirect('/expenses');
 }
 
@@ -78,6 +79,7 @@ export async function updateExpenseAction(
   }
 
   revalidatePath('/expenses');
+  revalidatePath('/dashboard');
   redirect('/expenses');
 }
 
@@ -93,5 +95,6 @@ export async function deleteExpenseAction(expenseId: string) {
   });
 
   revalidatePath('/expenses');
+  revalidatePath('/dashboard');
   redirect('/expenses');
 }

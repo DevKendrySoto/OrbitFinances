@@ -42,5 +42,7 @@ export async function createConversionAction(
   }
 
   revalidatePath(`/incomes/${incomeId}/convert`);
+  revalidatePath('/incomes');
+  revalidatePath('/dashboard');
   redirect(`/incomes/${incomeId}/convert`);
 }

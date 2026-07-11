@@ -18,5 +18,6 @@ export async function payOccurrenceAction(occurrenceId: string) {
   });
 
   revalidatePath('/calendar');
+  revalidatePath('/dashboard');
   redirect('/calendar');
 }

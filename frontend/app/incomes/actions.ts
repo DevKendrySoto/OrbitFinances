@@ -44,6 +44,7 @@ export async function createIncomeAction(values: CreateIncomeValues): Promise<Ac
   }
 
   revalidatePath('/incomes');
+  revalidatePath('/dashboard');
   redirect('/incomes');
 }
 
@@ -78,6 +79,7 @@ export async function updateIncomeAction(
   }
 
   revalidatePath('/incomes');
+  revalidatePath('/dashboard');
   redirect('/incomes');
 }
 
@@ -93,5 +95,6 @@ export async function deleteIncomeAction(incomeId: string) {
   });
 
   revalidatePath('/incomes');
+  revalidatePath('/dashboard');
   redirect('/incomes');
 }
